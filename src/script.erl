@@ -8,9 +8,15 @@
 %%====================================================================
 
 %% escript Entry point
-main(Args) ->
-    io:format("Args: ~p~n", [Args]),
-    erlang:halt(0).
+main(_) ->
+    Pid = self(),
+    Machine = custom_state_machines:start_machine(Pid),
+    Machine ! {event, log_in},
+    Machine ! {event, log_in},
+    receive
+        {state, final} ->
+            erlang:halt(0)
+    end.
 
 %%====================================================================
 %% Internal functions
