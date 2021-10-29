@@ -14,3 +14,7 @@ Run
 
     $ _build/default/bin/script
 
+Test
+---
+
+    $ rebar3 eunit
