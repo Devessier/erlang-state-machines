@@ -9,26 +9,41 @@
 
 %% escript Entry point
 main(_) ->
-    Machine = fsm:start(),
+    Machine = fsm_auth:start(),
 
-    {{state, logged_out}, {context, #{messages := []}}} = fsm:get_state(Machine),
+    Machine ! {state, self()},
+    receive
+        {{state, logged_out}, {context, #{messages := []}}} ->
+            void
+    end,
     io:format("Currently logged out with empty messages list~n"),
 
-    fsm:send_event(Machine, log_out),
+    Machine ! {event, log_out},
 
-    {{state, logged_out}, _} = fsm:get_state(Machine),
+    Machine ! {state, self()},
+    receive
+        {{state, logged_out}, _} ->
+            void
+    end,
     io:format("Still logged out after a log_out event~n"),
 
-    fsm:send_event(Machine, log_in),
-    fsm:send_event(Machine, log_in),
+    Machine ! {event, log_in},
+    Machine ! {event, log_in},
 
-    {{state, State}, {context, Context}} = fsm:get_state(Machine),
+    Machine ! {state, self()},
+    receive
+        {{state, State}, {context, Context}} ->
+            void
+    end,
     io:format("state and context: ~p|~p~n", [State, Context]),
 
-    fsm:send_event(Machine, {send_message, "This is my message"}),
+    Machine ! {event, {send_message, "This is my message"}},
 
-    {{state, StateAfterMessageSending}, {context, ContextAfterMessageSending}} =
-        fsm:get_state(Machine),
+    Machine ! {state, self()},
+    receive
+        {{state, StateAfterMessageSending}, {context, ContextAfterMessageSending}} ->
+            void
+    end,
     io:format("state and context: ~p|~p~n",
               [StateAfterMessageSending, ContextAfterMessageSending]),
 

@@ -2,15 +2,17 @@
 
 -export([start/0, loop/0]).
 
-logged_in(log_out, Context) ->
-    {{next_state, logged_out}, Context};
-logged_in(_Event, _Context) ->
-    keep_state_and_context.
+logged_in({send_message, Message}, #{messages := Messages} = Context) ->
+    {keep_state, Context#{messages := [Message | Messages]}};
+logged_in(log_out, _Context) ->
+    {next_state, logged_out};
+logged_in(_Event, Context) ->
+    {keep_state, Context}.
 
-logged_out(log_in, Context) ->
-    {{next_state, logged_in}, Context};
-logged_out(_Event, _Context) ->
-    keep_state_and_context.
+logged_out(log_in, _Context) ->
+    {next_state, logged_in};
+logged_out(_Event, Context) ->
+    {keep_state, Context}.
 
 call_state_handler(State, Context, Event) ->
     case State of
@@ -22,31 +24,25 @@ call_state_handler(State, Context, Event) ->
 
 loop() ->
     InitialState = logged_out,
-    InitialContext = #{},
+    InitialContext = #{messages => []},
 
-    loop(InitialState, InitialContext, void).
+    loop(InitialState, InitialContext).
 
-loop(State, Context, OldState) ->
-    if State =/= OldState ->
-           io:format("New state: ~p with context: ~p~n", [State, Context]);
-       true ->
-           void
-    end,
+loop(State, Context) ->
+    io:format("State: ~p with context: ~p~n", [State, Context]),
 
     receive
         {event, Event} ->
             HandlerReturn = call_state_handler(State, Context, Event),
             case HandlerReturn of
-                keep_state_and_context ->
-                    loop(State, Context, State);
                 {keep_state, NewContext} ->
-                    loop(State, NewContext, State);
-                {{next_state, NewState}, NewContext} ->
-                    loop(NewState, NewContext, State)
+                    loop(State, NewContext);
+                {next_state, NewState} ->
+                    loop(NewState, Context)
             end;
         {state, From} ->
             From ! {{state, State}, {context, Context}},
-            loop(State, Context, State)
+            loop(State, Context)
     end.
 
 start() ->
