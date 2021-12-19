@@ -1,6 +1,8 @@
 # erlang-state-machines
 
-Creation of declarative state machines in Erlang with gen_statem behaviour.
+Creation of declarative state machines in pure Erlang by leveraging pattern matching.
+
+[Explanatory blog post :link:](https://baptiste.devessier.fr/writing/create-state-machines-in-erlang)
 
 An escript
 
